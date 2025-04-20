@@ -79,7 +79,8 @@ def load_checkpoint(generator: torch.nn.Module, discriminator: torch.nn.Module, 
 def get_generator_loss(
     disc_fake: torch.Tensor,
     criterion: torch.nn.Module,
-    real_labels: torch.Tensor
+    real_labels: torch.Tensor,
+    model_type: str = "gan"
 ) -> torch.Tensor:
     """
     Tính mất mát của Generator.
@@ -87,9 +88,10 @@ def get_generator_loss(
     Generator muốn Discriminator đánh giá hình ảnh giả là thật (D(fake) ≈ 1).
 
     Args:
-        disc_fake (torch.Tensor): Đầu ra của Discriminator cho hình ảnh giả.
-        criterion (torch.nn.Module): Hàm mất mát (thường là BCELoss).
-        real_labels (torch.Tensor): Nhãn thật (0.9 với nhiễu nhãn).
+        disc_fake (torch.Tensor): Đầu ra của Discriminator cho hình ảnh giả (logits hoặc xác suất).
+        criterion (torch.nn.Module): Hàm mất mát (BCELoss hoặc BCEWithLogitsLoss).
+        real_labels (torch.Tensor): Nhãn thật (0.9 hoặc 1.0).
+        model_type (str): Loại mô hình ('gan' hoặc 'dcgan').
 
     Returns:
         torch.Tensor: Giá trị mất mát của Generator.
@@ -101,7 +103,8 @@ def get_discriminator_loss(
     disc_fake: torch.Tensor,
     criterion: torch.nn.Module,
     real_labels: torch.Tensor,
-    fake_labels: torch.Tensor
+    fake_labels: torch.Tensor,
+    model_type: str = "gan"
 ) -> torch.Tensor:
     """
     Tính mất mát của Discriminator.
@@ -109,11 +112,12 @@ def get_discriminator_loss(
     Discriminator muốn phân biệt hình ảnh thật (D(real) ≈ 1) và giả (D(fake) ≈ 0).
 
     Args:
-        disc_real (torch.Tensor): Đầu ra của Discriminator cho hình ảnh thật.
-        disc_fake (torch.Tensor): Đầu ra của Discriminator cho hình ảnh giả.
-        criterion (torch.nn.Module): Hàm mất mát (thường là BCELoss).
-        real_labels (torch.Tensor): Nhãn thật (0.9 với nhiễu nhãn).
+        disc_real (torch.Tensor): Đầu ra của Discriminator cho hình ảnh thật (logits hoặc xác suất).
+        disc_fake (torch.Tensor): Đầu ra của Discriminator cho hình ảnh giả (logits hoặc xác suất).
+        criterion (torch.nn.Module): Hàm mất mát (BCELoss hoặc BCEWithLogitsLoss).
+        real_labels (torch.Tensor): Nhãn thật (0.9 hoặc 1.0).
         fake_labels (torch.Tensor): Nhãn giả (0.0).
+        model_type (str): Loại mô hình ('gan' hoặc 'dcgan').
 
     Returns:
         torch.Tensor: Giá trị mất mát của Discriminator (trung bình của thật và giả).

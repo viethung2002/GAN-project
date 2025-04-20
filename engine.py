@@ -33,7 +33,8 @@ def train_gan(
     Returns:
         tuple: Danh sách mất mát của Generator và Discriminator.
     """
-    criterion = nn.BCELoss()
+    # Chọn hàm mất mát dựa trên model_type
+    criterion = nn.BCELoss() if model_type.lower() == "gan" else nn.BCEWithLogitsLoss()
     gen_optimizer = torch.optim.Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
     disc_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
 
@@ -65,15 +66,22 @@ def train_gan(
             fake_noise = get_noise(cur_batch_size, z_dim, device=device)
             fake = generator(fake_noise)
 
-            # Nhiễu nhãn
-            real_labels = torch.ones(cur_batch_size, 1, device=device) * 0.9
+            # Nhãn: Nhiễu nhãn cho DCGAN, không nhiễu nhãn cho standard GAN
+            real_labels = torch.ones(cur_batch_size, 1, device=device) * (0.9 if model_type.lower() == "dcgan" else 1.0)
             fake_labels = torch.zeros(cur_batch_size, 1, device=device)
 
             disc_fake_pred = discriminator(fake.detach())
             disc_real_pred = discriminator(real)
 
+            # In giá trị Discriminator và Generator để gỡ lỗi
+            if cur_step % display_step == 0:
+                print(f"Disc real pred range: [{disc_real_pred.min().item():.4f}, {disc_real_pred.max().item():.4f}]")
+                print(f"Disc fake pred range: [{disc_fake_pred.min().item():.4f}, {disc_fake_pred.max().item():.4f}]")
+                print(f"Fake image range: [{fake.min().item():.4f}, {fake.max().item():.4f}]")
+                print(f"Fake image shape: {fake.shape}")
+
             disc_loss = get_discriminator_loss(
-                disc_real_pred, disc_fake_pred, criterion, real_labels, fake_labels
+                disc_real_pred, disc_fake_pred, criterion, real_labels, fake_labels, model_type
             )
             disc_loss.backward(retain_graph=True)
             disc_optimizer.step()
@@ -87,7 +95,7 @@ def train_gan(
             fake_2 = generator(fake_noise_2)
             disc_fake_pred = discriminator(fake_2)
 
-            gen_loss = get_generator_loss(disc_fake_pred, criterion, real_labels)
+            gen_loss = get_generator_loss(disc_fake_pred, criterion, real_labels, model_type)
             gen_loss.backward()
             gen_optimizer.step()
 
