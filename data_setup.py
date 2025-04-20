@@ -5,33 +5,43 @@ from torchvision import datasets, transforms
 def create_dataloaders(
     data_dir: str = "data",
     batch_size: int = 128,
+    model_type: str = "gan",
     num_workers: int = 0
 ) -> DataLoader:
     """
-    Creates a DataLoader for the MNIST dataset.
-    
+    Tạo DataLoader cho tập dữ liệu MNIST, điều chỉnh chuẩn hóa theo loại mô hình.
+
     Args:
-        data_dir (str): Directory to store/download MNIST data.
-        batch_size (int): Number of samples per batch.
-        num_workers (int): Number of subprocesses for data loading.
-    
+        data_dir (str): Thư mục lưu/tải dữ liệu MNIST.
+        batch_size (int): Kích thước lô.
+        model_type (str): Loại mô hình ('gan' hoặc 'dcgan').
+        num_workers (int): Số tiến trình phụ để tải dữ liệu.
+
     Returns:
-        DataLoader: DataLoader for MNIST training data.
+        DataLoader: DataLoader cho dữ liệu huấn luyện MNIST.
     """
-    # Define transforms: Convert to tensor only
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
-    
-    # Load MNIST dataset
+    # Biến đổi: Chuyển thành tensor và chuẩn hóa theo model_type
+    if model_type.lower() == "dcgan":
+        # DCGAN: Chuẩn hóa về [-1, 1]
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+    else:
+        # GAN: Không chuẩn hóa, giữ [0, 1]
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
+
+    # Tải tập dữ liệu MNIST
     mnist_dataset = datasets.MNIST(
         root=data_dir,
         train=True,
         transform=transform,
         download=True
     )
-    
-    # Create DataLoader
+
+    # Tạo DataLoader
     dataloader = DataLoader(
         mnist_dataset,
         batch_size=batch_size,
@@ -39,5 +49,5 @@ def create_dataloaders(
         num_workers=num_workers,
         pin_memory=True
     )
-    
+
     return dataloader
